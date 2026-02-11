@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced AI Pharmacy Dashboard - Full System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f1f5f9; color: #334155; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .red-alert-text { color: #ef4444; font-weight: 700; }
+        .status-badge { padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: bold; }
+        .chat-box { position: fixed; bottom: 0; width: 320px; transition: all 0.3s ease; z-index: 50; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); }
+        .chat-minimized { transform: translateY(calc(100% - 40px)); }
+        .drug-clickable { cursor: pointer; transition: color 0.2s; border-bottom: 2px dashed #cbd5e1; }
+        .drug-clickable:hover { color: #3b82f6; border-color: #3b82f6; }
+        .msg-bubble { max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 12px; margin-bottom: 8px; }
+        .msg-doctor { background: #f1f5f9; align-self: flex-start; }
+        .msg-me { background: #dcfce7; align-self: flex-end; color: #166534; }
+        .scanner-line { height: 2px; background: #22c55e; position: absolute; width: 100%; top: 50%; animation: scan 2s infinite; }
+        @keyframes scan { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <div id="drugModal" class="fixed inset-0 bg-black/50 hidden z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 id="modalDrugName" class="text-2xl font-bold text-slate-800 tracking-tight">Drug Name</h3>
+                    <p id="modalDrugClass" class="text-sm text-blue-500 font-medium"></p>
+                </div>
+                <button onclick="closeModal('drugModal')" class="text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
+            </div>
+            <div id="modalContent" class="space-y-4"></div>
+            <button onclick="closeModal('drugModal')" class="w-full mt-8 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-black transition">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+
+    <div id="scannerModal" class="fixed inset-0 bg-black/80 hidden z-[110] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl overflow-hidden max-w-sm w-full shadow-2xl">
+            <div class="bg-slate-800 p-4 text-white flex justify-between items-center">
+                <span class="text-sm font-bold">📷 กำลังสแกนบาร์โค้ดยา...</span>
+                <button onclick="closeModal('scannerModal')">✕</button>
+            </div>
+            <div class="relative h-64 bg-black flex items-center justify-center">
+                <div class="w-48 h-32 border-2 border-green-500 rounded-lg relative overflow-hidden">
+                    <div class="scanner-line"></div>
+                </div>
+            </div>
+            <div class="p-6 text-center">
+                <p class="text-xs text-slate-500 mb-4 tracking-wide">กรุณาถือบาร์โค้ดให้ตรงกับกรอบสีเขียว</p>
+                <button onclick="simulateScanSuccess()" class="bg-blue-600 text-white px-8 py-2 rounded-full font-bold hover:bg-blue-700 transition shadow-lg">จำลองการสแกนสำเร็จ</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="w-16 flex flex-col items-center py-6 bg-white border-r border-slate-200 shadow-sm">
+        <a href="login.html" class="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center font-bold text-xl text-white shadow-lg mb-10 hover:bg-blue-600 transition-all" title="ออกจากระบบ">
+            P
+        </a>
+        
+        <div class="flex-1 flex flex-col items-center justify-between w-full pb-6">
+            <div class="space-y-8 text-slate-400 text-center">
+                <div class="cursor-pointer hover:text-blue-500 text-xl transition-all" title="Dashboard">🏠</div>
+                <div class="cursor-pointer hover:text-blue-500 text-xl transition-all" title="ประวัติคนไข้">📜</div>
+                <div class="cursor-pointer hover:text-blue-500 text-xl transition-all" title="คลังยา">💊</div>
+            </div>
+
+            <div class="text-slate-400 hover:text-blue-500 transition-all">
+                <a href="setting.html" class="text-xl" title="ตั้งค่าระบบ">⚙️</a>
+            </div>
+        </div>
+    </nav>
+
+    <aside class="w-1/4 bg-white border-r border-slate-200 p-6 overflow-y-auto">
+        <div class="text-center mb-8 pb-8 border-b border-slate-100">
+            <div class="relative inline-block mb-4">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-24 h-24 bg-slate-50 rounded-3xl border border-slate-200 p-1 shadow-sm" />
+                <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-4 border-white rounded-full shadow-sm"></div>
+            </div>
+            <h2 class="font-bold text-xl text-slate-800">นายสมปอง ใจดี</h2>
+            <p class="text-xs text-slate-400 font-bold tracking-widest uppercase mt-1">HN: 123-45-67</p>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-red-50 p-4 rounded-2xl border-l-4 border-red-500 shadow-sm">
+                <p class="text-[10px] text-red-600 uppercase font-bold tracking-widest">🚨 ค่าผิดปกติล่าสุด</p>
+                <ul class="mt-2 space-y-1 text-sm font-semibold">
+                    <li class="red-alert-text">ALT: 85* (ตับสูง)</li>
+                    <li class="text-slate-700">BP: 145/90</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">ประวัติการรับยา (History)</h3>
+                <div class="space-y-3">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <p class="text-[10px] font-bold text-blue-500 mb-1">12 ม.ค. 2567</p>
+                        <p class="text-xs font-bold text-slate-700">Amlodipine 5mg, Metformin 500mg</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-10">
+            <button onclick="toggleChat('patient-chat')" class="w-full flex items-center justify-center gap-2 bg-green-500 text-white py-3 rounded-2xl font-bold hover:bg-green-600 transition shadow-lg shadow-green-100">
+                <span>💬</span> Line OA: คนไข้
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 bg-white p-10 overflow-y-auto">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-bold text-slate-800 tracking-tight">รายการใบสั่งยาปัจจุบัน</h2>
+                <p class="text-sm text-slate-400 mt-2 font-medium">แพทย์ผู้สั่ง: <span class="text-slate-700">นพ. วิรัช</span> | <span class="text-blue-500">ห้องตรวจ 12 ชั้น 2</span></p>
+            </div>
+            <button onclick="openScanner()" class="bg-slate-800 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-slate-700 transition shadow-xl">
+                <span>📷</span> สแกนบาร์โค้ดยา
+            </button>
+        </header>
+
+        <div class="space-y-8 mb-12" id="medicationList">
+            <section class="group">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">1</div>
+                    <span onclick="showDrugInfo('Warfarin')" class="drug-clickable text-xl font-bold text-slate-800">Warfarin 5mg</span>
+                </div>
+                <div class="ml-14 grid grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm">กินวันละ 1 เม็ด ก่อนนอน</div>
+                    <div class="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-[11px] text-blue-600">
+                        <strong>AI Note:</strong> ระวังอาหารที่มีวิตามิน K สูง
+                    </div>
+                </div>
+            </section>
+
+            <section id="drug-row-2">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center font-bold">2</div>
+                    <span onclick="showDrugInfo('Ibuprofen')" class="drug-clickable text-xl font-bold text-slate-800">Ibuprofen 400mg</span>
+                </div>
+                <div class="ml-14 bg-red-50 border border-red-100 p-4 rounded-2xl">
+                    <p class="red-alert-text text-sm">⚠️ Drug Interaction: เสี่ยงเลือดออกเมื่อใช้ร่วมกับ Warfarin</p>
+                </div>
+            </section>
+        </div>
+
+        <div class="border-2 border-blue-500 rounded-3xl p-8 bg-white shadow-2xl relative">
+            <div class="absolute -top-4 left-8 bg-blue-500 text-white px-5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg">ระบบปรึกษาแพทย์</div>
+            <div class="space-y-5">
+                <textarea id="concernNote" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm h-24 focus:ring-2 focus:ring-blue-500 outline-none">พบ Interaction ระหว่าง Warfarin และ Ibuprofen แนะนำให้เปลี่ยนเป็น Paracetamol เพื่อความปลอดภัยของคนไข้ครับ</textarea>
+                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
+                    <div id="interactionStatus" class="flex items-center gap-2 text-sm text-red-500 font-bold">
+                        <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span> รอการอนุมัติการแก้ไข
+                    </div>
+                    <button onclick="sendToDoctor()" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg">ส่งคำขอถึง นพ. วิรัช</button>
+                </div>
+            </div>
+        </div>
+
+        <button id="confirmBtn" onclick="confirmOrder()" class="w-full mt-10 py-5 bg-slate-800 text-white rounded-2xl font-bold opacity-50 cursor-not-allowed text-lg shadow-xl" disabled>ยืนยันการจัดยา (Confirm & Dispense)</button>
+    </main>
+
+    <aside class="w-1/4 bg-blue-50 p-8 border-l border-blue-100 overflow-y-auto">
+        <div class="flex items-center gap-2 mb-10">
+            <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>
+            <h2 class="font-bold text-blue-800 uppercase tracking-widest text-xs">AI Insights Panel</h2>
+        </div>
+        <div id="doctorReplyBox" class="bg-white border-2 border-slate-200 rounded-2xl p-6 shadow-sm opacity-50 min-h-[120px] flex items-center justify-center">
+            <div id="doctorReplyContent" class="text-xs text-slate-400 italic text-center">ยังไม่มีความเห็นที่ส่งไป</div>
+        </div>
+        <button onclick="toggleChat('doctor-chat')" class="w-full mt-4 py-4 bg-slate-800 text-white rounded-2xl text-xs font-bold shadow-lg">👨‍⚕️ แชทด่วนกับ นพ. วิรัช</button>
+    </aside>
+
+    <div id="doctor-chat" class="chat-box chat-minimized right-[350px] bg-white border border-slate-300 rounded-t-2xl overflow-hidden flex flex-col h-[400px]">
+        <div onclick="toggleChat('doctor-chat')" class="bg-slate-800 text-white p-4 cursor-pointer flex justify-between items-center text-xs font-bold">
+            <span>🟢 นพ. วิรัช (Internal Med)</span>
+            <span>▲/▼</span>
+        </div>
+        <div id="doctor-messages" class="flex-1 p-4 overflow-y-auto bg-slate-50 flex flex-col"></div>
+        <div class="p-3 border-t flex gap-2">
+            <input type="text" id="doctor-input" placeholder="ส่งข้อความ..." class="flex-1 text-xs p-2.5 border rounded-xl outline-none">
+            <button onclick="sendChatMessage('doctor')" class="bg-blue-600 text-white px-4 rounded-xl text-xs font-bold">ส่ง</button>
+        </div>
+    </div>
+
+    <div id="patient-chat" class="chat-box chat-minimized right-5 bg-white border border-green-300 rounded-t-2xl overflow-hidden flex flex-col h-[400px]">
+        <div onclick="toggleChat('patient-chat')" class="bg-green-600 text-white p-4 cursor-pointer flex justify-between items-center text-xs font-bold">
+            <span>🟢 Line OA: คุณสมปอง</span>
+            <span>▲/▼</span>
+        </div>
+        <div id="patient-messages" class="flex-1 p-4 overflow-y-auto bg-green-50/20 flex flex-col"></div>
+        <div class="p-3 border-t flex gap-2">
+            <input type="text" id="patient-input" placeholder="ตอบกลับคนไข้..." class="flex-1 text-xs p-2.5 border rounded-xl outline-none">
+            <button onclick="sendChatMessage('patient')" class="bg-green-600 text-white px-4 rounded-xl text-xs font-bold">ส่ง</button>
+        </div>
+    </div>
+
+    <script>
+        const drugDatabase = {
+            'Warfarin': { class: 'Anticoagulant', indication: 'ป้องกันลิ่มเลือดอุดตัน', usage: 'กินป้องกันภาวะลิ่มเลือดอุดตัน', warning: 'ระวังผักใบเขียว', sideEffects: 'เลือดออกง่าย' },
+            'Ibuprofen': { class: 'NSAIDs', indication: 'แก้ปวดลดอักเสบ', usage: 'บรรเทาปวดและลดไข้', warning: 'ระวังโรคไตและกระเพาะ', sideEffects: 'ปวดท้อง' },
+            'Paracetamol': { class: 'Analgesic', indication: 'แก้ปวดลดไข้', usage: 'บรรเทาปวดทั่วไป', warning: 'ห้ามทานเกิน 8 เม็ด/วัน', sideEffects: 'พิษต่อตับ' }
+        };
+
+        function toggleChat(id) { document.getElementById(id).classList.toggle('chat-minimized'); }
+        function openScanner() { document.getElementById('scannerModal').classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function showDrugInfo(name) {
+            const drug = drugDatabase[name];
+            document.getElementById('modalDrugName').innerText = name;
+            document.getElementById('modalDrugClass').innerText = drug.class;
+            document.getElementById('modalContent').innerHTML = `<div class="bg-blue-50 p-4 rounded-2xl text-sm font-bold text-blue-900">${drug.indication}</div><p class="text-xs text-slate-700">${drug.usage}</p><div class="bg-red-50 p-4 rounded-2xl text-xs text-red-700">${drug.warning}</div>`;
+            document.getElementById('drugModal').classList.remove('hidden');
+        }
+
+        function simulateScanSuccess() {
+            closeModal('scannerModal');
+            Swal.fire({ title: 'สแกนสำเร็จ!', text: 'พบ Ibuprofen 400mg', icon: 'success' });
+        }
+
+        function sendToDoctor() {
+            const box = document.getElementById('doctorReplyBox');
+            box.classList.remove('opacity-50');
+            document.getElementById('doctorReplyContent').innerHTML = '<div class="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div><p class="text-blue-600 font-bold mt-2">รอหมอตอบกลับ...</p>';
+            setTimeout(doctorReplies, 2000);
+        }
+
+        function doctorReplies() {
+            document.getElementById('doctorReplyContent').innerHTML = `<div class="text-left"><p class="font-bold text-green-600">✅ อนุมัติการแก้ไข</p><p class="text-sm">"เปลี่ยนเป็น Paracetamol 500mg แทนได้เลยครับ"</p><button onclick="applyCorrection()" class="w-full mt-2 py-2 bg-green-500 text-white rounded-lg font-bold">อัปเดตหน้าจอ</button></div>`;
+        }
+
+        function applyCorrection() {
+            document.getElementById('drug-row-2').innerHTML = `<div class="flex items-center gap-4 mb-3"><div class="w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center">✓</div><span onclick="showDrugInfo('Paracetamol')" class="drug-clickable text-xl font-bold">Paracetamol 500mg (Updated)</span></div>`;
+            const btn = document.getElementById('confirmBtn');
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.disabled = false;
+            document.getElementById('interactionStatus').innerHTML = `✅ แก้ไขแล้วโดยแพทย์`;
+        }
+
+        function sendChatMessage(target) {
+            const input = document.getElementById(`${target}-input`);
+            if (!input.value) return;
+            appendChatMessage(target, input.value, 'me');
+            input.value = '';
+        }
+
+        function appendChatMessage(target, text, sender) {
+            const container = document.getElementById(`${target}-messages`);
+            const div = document.createElement('div');
+            div.className = `msg-bubble ${sender === 'me' ? 'msg-me' : 'msg-doctor'}`;
+            div.innerText = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function confirmOrder() { Swal.fire('สำเร็จ', 'ส่งข้อมูลไปห้องจ่ายยาแล้ว', 'success'); }
+    </script>
+</body>
+</html>
