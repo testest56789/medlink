@@ -3,308 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medlink Pro - Ultimate Edition</title>
+    <title>Medlink Pro - Modern Integrated UI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
-        .wa-bg { background-color: #e5ddd5; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
         .hidden { display: none; }
-        .active-tab { background-color: #3b82f6; color: white !important; }
-        #camera-view { width: 100%; height: 250px; background: #000; border-radius: 1.5rem; object-fit: cover; }
-        .scanner-line { height: 2px; background: #22c55e; position: absolute; width: 100%; top: 50%; animation: scan 2s infinite; }
-        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+        .sidebar-active { background-color: #2563eb; color: white !important; }
+        .sidebar-item { transition: all 0.2s; border-radius: 1rem; }
+        .glass-card { background: white; border-radius: 2rem; border: 1px solid #e2e8f0; }
+        .history-card { background: white; border-radius: 3rem; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
+        .history-header { background-color: #0f172a; padding: 1.5rem 2.5rem; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .chat-container { border-radius: 3rem; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .wa-bg { background-color: #f0f2f5; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; opacity: 0.9; }
+        .pill-input { border-radius: 9999px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.75rem 1.5rem; }
+        
+        /* สไตล์เพิ่มเติมสำหรับปุ่ม Logout */
+        .btn-m-logout { cursor: pointer; transition: transform 0.2s; }
+        .btn-m-logout:hover { transform: scale(1.1); filter: brightness(1.2); }
     </style>
+    
+    <script>
+        // ส่วนตรวจสอบสิทธิ์ก่อนเข้าหน้าเว็ป
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+    </script>
 </head>
 <body class="h-screen flex overflow-hidden">
 
-    <div id="scannerModal" class="fixed inset-0 bg-black/90 hidden z-[200] flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2.5rem] overflow-hidden max-w-sm w-full shadow-2xl">
-            <div class="bg-slate-800 p-5 text-white flex justify-between items-center text-sm font-bold">
-                <span>📷 สแกน/คีย์รหัสยา</span>
-                <button onclick="stopCamera()" class="text-2xl">✕</button>
-            </div>
-            <div class="relative bg-black h-64">
-                <video id="camera-view" autoplay playsinline></video>
-                <div class="scanner-line"></div>
-            </div>
-            <div class="p-8 space-y-4">
-                <input type="text" id="manualCode" placeholder="พิมพ์รหัสยา..." class="w-full p-4 border rounded-2xl text-center font-bold text-blue-600 outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="handleScanResult()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200">ตกลง</button>
-            </div>
+    <nav class="w-20 bg-[#0f172a] flex flex-col items-center py-6 gap-6 z-50">
+        <div onclick="handleLogout()" title="ออกจากระบบ" class="btn-m-logout w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg mb-4">M</div>
+        
+        <div class="flex-1 flex flex-col gap-4 text-slate-400 text-xl w-full px-3">
+            <button id="nav-home" onclick="switchPage('main')" class="sidebar-item p-3 flex justify-center hover:bg-slate-800 sidebar-active">🏠</button>
+            <button id="nav-history" onclick="switchPage('history')" class="sidebar-item p-3 flex justify-center hover:bg-slate-800">📜</button>
+            <button id="nav-profile" onclick="switchPage('profile')" class="sidebar-item p-3 flex justify-center hover:bg-slate-800">👤</button>
+            <button onclick="openModal('chatModal')" class="sidebar-item p-3 flex justify-center hover:bg-slate-800">💬</button>
+            <button onclick="startCamera()" class="sidebar-item p-3 flex justify-center hover:bg-slate-800">📷</button>
         </div>
-    </div>
-
-    <div id="chatModal" class="fixed inset-0 bg-black/60 hidden z-[150] flex items-end justify-end p-6">
-        <div class="bg-white w-[550px] h-[650px] rounded-[3rem] shadow-2xl flex overflow-hidden border">
-            <div class="w-24 bg-slate-50 flex flex-col items-center py-8 gap-8 border-r">
-                <button onclick="selectChat('นพ. วิรัช', 'Online', '🩺')" class="relative">
-                    <div class="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-2xl shadow-md">🩺</div>
-                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-                </button>
-                <button onclick="selectChat('พย. มาลี', 'Online', '💉')" class="relative">
-                    <div class="w-14 h-14 bg-purple-500 rounded-2xl flex items-center justify-center text-2xl shadow-md">💉</div>
-                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-                </button>
-                <button onclick="selectChat('ภก. สมชาย', 'Offline', '💊')" class="relative">
-                    <div class="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl shadow-md">💊</div>
-                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 border-2 border-white rounded-full"></div>
-                </button>
-            </div>
-            <div class="flex-1 flex flex-col">
-                <div class="p-5 bg-slate-800 text-white flex justify-between items-center">
-                    <div>
-                        <p id="chat-target" class="font-bold text-sm">เลือกฝ่ายที่ต้องการติดต่อ</p>
-                        <p id="chat-status" class="text-[10px] opacity-70 italic font-bold"></p>
-                    </div>
-                    <button onclick="closeModal('chatModal')" class="text-2xl">&times;</button>
-                </div>
-                <div class="flex-1 wa-bg p-5 overflow-y-auto space-y-4" id="chat-messages">
-                    <div class="text-center text-slate-500 mt-20 italic text-sm">กรุณาเลือกบุคคลเพื่อเริ่มการสนทนา</div>
-                </div>
-                <div class="p-5 bg-white border-t flex gap-3">
-                    <input type="text" id="chat-input" placeholder="พิมพ์ข้อความ..." class="flex-1 bg-slate-100 rounded-full px-5 py-2 text-sm outline-none">
-                    <button onclick="sendMessage()" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg">➤</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <nav class="w-20 bg-[#0f172a] flex flex-col items-center py-8 gap-10 z-50">
-        <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">M</div>
-        <div class="flex-1 flex flex-col gap-10 text-slate-500 text-2xl pt-10">
-            <button id="nav-home" onclick="switchPage('main')" class="p-3 rounded-xl hover:text-white transition active-tab">🏠</button>
-            <button id="nav-history" onclick="switchPage('history')" class="p-3 rounded-xl hover:text-white transition">📜</button>
-            <button id="nav-profile" onclick="switchPage('profile')" class="p-3 rounded-xl hover:text-white transition">👤</button>
-            <button onclick="openModal('chatModal')" class="p-3 rounded-xl hover:text-white transition">💬</button>
-            <button onclick="startCamera()" class="p-3 rounded-xl hover:text-white transition">📷</button>
-        </div>
+        <a href="setting.html" class="sidebar-item p-3 text-slate-400 hover:bg-slate-800 mt-auto">⚙️</a>
     </nav>
 
     <div class="flex-1 flex overflow-hidden relative">
-        
-        <div id="page-main" class="flex-1 flex overflow-hidden">
-            <aside class="w-80 bg-white border-r p-6 overflow-y-auto space-y-6">
-                <div class="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    <span>Patient Info</span>
-                    <span class="text-green-500">● Active</span>
+        <div id="page-main" class="flex-1 flex overflow-hidden bg-white">
+            <aside class="w-72 border-r p-6 overflow-y-auto bg-white">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Patient Info</span>
+                    <span class="text-green-500 text-[10px] font-bold flex items-center gap-1">● ACTIVE</span>
                 </div>
-                <div class="text-center border-b pb-6">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-24 h-24 mx-auto bg-slate-50 rounded-[2rem] border p-1 shadow-sm mb-4" />
+                <div class="text-center mb-8">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-24 h-24 mx-auto bg-slate-50 rounded-full border mb-4" />
                     <h2 class="font-bold text-xl text-slate-800">นายสมปอง ใจดี</h2>
-                    <p class="text-[10px] text-slate-400 font-bold tracking-widest">HN: 123-45-67</p>
+                    <p class="text-[10px] text-slate-400 font-bold">HN: 123-45-67</p>
                 </div>
-
-                <div class="space-y-4 pt-4">
-                    <div class="p-5 bg-slate-50 rounded-2xl space-y-2 text-[11px]">
-                        <p class="text-slate-400 font-bold uppercase">📍 สถานที่ดำเนินการ</p>
-                        <p class="font-bold text-slate-700 leading-relaxed">● ส่งยา: ห้องจ่ายยา เบอร์ 4 ชั้น 1</p>
-                        <p class="font-bold text-slate-700 leading-relaxed">● ส่งเอกสาร: ห้องตรวจ 12 (นพ. วิรัช)</p>
+                
+                <div class="space-y-4">
+                    <div class="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                        <p class="text-[10px] text-red-500 font-bold uppercase mb-2">📍 สถานที่ดำเนินการ</p>
+                        <p class="text-[11px] font-bold text-slate-600 leading-relaxed">• ส่งยา: ช่องจ่ายยา 4 ชั้น 1<br>• เอกสาร: ห้องตรวจ 12 (นพ. วิรัช)</p>
                     </div>
-
-                    <div class="p-5 bg-orange-50 rounded-2xl border border-orange-100 flex justify-between items-center">
+                    <div class="p-4 bg-orange-50 rounded-2xl border border-orange-100 flex justify-between items-center">
                         <div>
-                            <p class="text-[10px] text-orange-600 font-bold uppercase mb-1">📅 วันนัดหมายครั้งถัดไป</p>
-                            <p class="font-bold text-slate-800">15 มีนาคม 2569</p>
+                            <p class="text-[10px] text-orange-600 font-bold uppercase">📅 วันนัดหมายครั้งถัดไป</p>
+                            <p class="text-sm font-bold text-slate-800">15 มีนาคม 2569</p>
                         </div>
-                        <button onclick="showCalendar()" class="bg-white p-2 rounded-xl shadow-sm hover:bg-orange-100 transition text-lg">📅</button>
+                        <span class="text-2xl">📅</span>
                     </div>
-
-                    <div class="p-5 bg-red-50 rounded-2xl border-l-4 border-red-500 space-y-2">
-                        <p class="text-[10px] text-red-600 font-bold uppercase">🚨 ค่า LAB ผิดปกติ</p>
-                        <p class="text-xs font-bold text-red-700">• ALT: 85* (High)</p>
-                        <p class="text-xs font-bold text-red-700">• ความดัน: 145/90</p>
+                    <div class="p-4 bg-red-50 rounded-2xl border border-red-100">
+                        <p class="text-[10px] text-red-600 font-bold uppercase">📄 ค่า LAB ผิดปกติ</p>
+                        <p class="text-[11px] font-bold text-red-700 leading-relaxed">• ALT: 85* (High)<br>• ความดัน: 145/90</p>
                     </div>
                 </div>
             </aside>
 
-            <main class="flex-1 bg-white p-10 overflow-y-auto">
-                <header class="flex justify-between items-start mb-10">
+            <main class="flex-1 p-10 overflow-y-auto">
+                <header class="flex justify-between items-center mb-10">
                     <div>
-                        <h1 class="text-3xl font-bold text-slate-800">การจ่ายยา</h1>
+                        <h1 class="text-4xl font-bold text-slate-800">การจ่ายยา</h1>
                         <p class="text-sm text-slate-400 mt-2">แพทย์ผู้สั่ง: <span class="text-blue-500 font-bold">นพ. วิรัช | ห้องตรวจ 12 ชั้น 2</span></p>
                     </div>
-                    <button onclick="startCamera()" class="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:bg-slate-800 transition">
-                        <span>📷</span> สแกนรหัสยา
+                    <button class="bg-[#0f172a] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg">
+                        📷 สแกนรหัสยา
                     </button>
                 </header>
 
-                <div class="space-y-6">
-                    <div class="p-6 bg-slate-50 rounded-[2.5rem] border border-slate-100">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg">1</div>
-                            <h3 class="font-bold text-2xl text-slate-800">Warfarin 5mg</h3>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 text-xs italic text-slate-400">
-                            <div class="bg-white p-4 rounded-2xl border">Dose / ความถี่: 1 เม็ด วันละครั้ง</div>
-                            <div class="bg-white p-4 rounded-2xl border">AI: ให้ยานี้เกิน 3 วันหรือไม่?</div>
-                        </div>
+                <div class="space-y-8">
+                    <div class="flex items-center gap-6">
+                        <div class="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-bold text-xl shadow-lg">1</div>
+                        <h3 class="font-bold text-3xl text-slate-800">Warfarin 5mg</h3>
                     </div>
-
-                    <div class="border-2 border-blue-500 rounded-[3rem] p-10 relative shadow-2xl bg-white mt-12">
-                        <div class="absolute -top-4 left-10 bg-blue-500 text-white px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest">SEND CONCERN TO DOCTOR</div>
-                        <div class="space-y-6">
-                            <div class="flex gap-6 text-xs font-bold text-slate-500">
-                                <label class="flex items-center gap-2"><input type="radio" name="c"> Dose</label>
-                                <label class="flex items-center gap-2"><input type="radio" name="c"> เวลา</label>
-                                <label class="flex items-center gap-2 text-red-500"><input type="radio" name="c" checked> กินตัวนี้แล้วเสี่ยง</label>
-                            </div>
-                            <textarea id="concernInput" class="w-full bg-slate-50 border rounded-2xl p-5 text-sm h-32 outline-none focus:ring-2 focus:ring-blue-200" placeholder="พิมพ์ข้อความถึงแพทย์ที่นี่...">พบ Interaction รุนแรงกับ Warfarin แนะนำเปลี่ยนยาครับ</textarea>
-                            <button onclick="Swal.fire('สำเร็จ', 'ส่งความเห็นถึงแพทย์เรียบร้อยแล้ว', 'success')" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">ส่งข้อความถึงแพทย์ (Send)</button>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" placeholder="Dose / ความถี่: 1 เม็ด วันละครั้ง" class="w-full p-6 bg-slate-50 rounded-[2rem] border-none text-slate-400 text-sm italic">
+                        <input type="text" placeholder="AI: ให้ยานี้เกิน 3 วันหรือไม่?" class="w-full p-6 bg-slate-50 rounded-[2rem] border-none text-slate-400 text-sm italic">
+                    </div>
+                    <div class="border-2 border-blue-400 rounded-[3rem] p-10 relative mt-12">
+                        <div class="absolute -top-5 left-10 flex gap-2">
+                            <span class="bg-blue-500 text-white px-6 py-2 rounded-full text-[10px] font-bold uppercase">Send Concern to Doctor</span>
                         </div>
+                        <div class="flex gap-6 mb-6 text-sm font-bold text-slate-500">
+                            <label class="flex items-center gap-2"><input type="radio" name="type"> Dose</label>
+                            <label class="flex items-center gap-2"><input type="radio" name="type"> เวลา</label>
+                            <label class="flex items-center gap-2 text-blue-600"><input type="radio" name="type" checked> กินตัวนี้แล้วเสี่ยง</label>
+                        </div>
+                        <textarea class="w-full bg-slate-50 rounded-3xl p-8 text-lg font-bold text-slate-700 h-40 outline-none border-none" readonly>พบ Interaction รุนแรงกับ Warfarin แนะนำเปลี่ยนยาครับ</textarea>
+                        <button class="w-full mt-6 bg-blue-600 text-white py-5 rounded-[2rem] font-bold text-xl shadow-xl hover:bg-blue-700 transition">ส่งข้อความถึงแพทย์ (Send)</button>
                     </div>
                 </div>
             </main>
 
-            <aside class="w-80 bg-blue-50/40 p-8 border-l border-blue-50">
-                <h2 class="font-bold text-blue-900 uppercase tracking-widest text-[10px] mb-10 flex items-center gap-2">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full animate-ping"></span> AI แจ้งเตือน / ข้อควรระวัง
-                </h2>
+            <aside class="w-80 bg-slate-50/50 border-l p-8 overflow-y-auto">
+                <div class="flex items-center gap-2 mb-8">
+                    <span class="w-3 h-3 bg-blue-500 rounded-full"></span>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-tighter">AI แจ้งเตือน / ข้อควรระวัง</h3>
+                </div>
                 <div class="space-y-6">
-                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-red-100">
-                        <p class="text-xs font-bold text-slate-800 mb-3">ความเสี่ยงยาตีกัน?</p>
-                        <div class="bg-red-500 text-white p-4 rounded-2xl text-[10px] font-bold leading-relaxed">
-                            ⚠️ เสี่ยงสูง! อาจเกิดภาวะเลือดออกในทางเดินอาหาร (GI Bleed)
+                    <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
+                        <p class="text-sm font-bold text-slate-800 mb-4 text-center">ความเสี่ยงยาตีกัน?</p>
+                        <div class="bg-red-500 text-white p-5 rounded-3xl">
+                            <p class="text-[11px] font-bold mb-1">⚠️ เสี่ยงสูง อาจเกิดภาวะเลือดออกในทางเดินอาหาร (GI Bleed)</p>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-blue-100">
-                        <p class="text-xs font-bold text-slate-800 mb-3">คำแนะนำเสริม</p>
-                        <p class="text-[10px] text-slate-500 italic leading-loose">"แนะนำให้ลด dose Warfarin ลง 20% หากเปลี่ยนเป็นยา Paracetamol ทดแทน"</p>
+                    <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
+                        <p class="text-sm font-bold text-slate-800 mb-4">คำแนะนำเสริม</p>
+                        <p class="text-[11px] italic text-slate-500 leading-relaxed">"แนะนำให้ลด dose Warfarin ลง 20% หากเปลี่ยนเป็นยา Paracetamol ทดแทน"</p>
                     </div>
                 </div>
             </aside>
         </div>
 
         <main id="page-history" class="absolute inset-0 z-40 bg-white p-12 overflow-y-auto hidden">
-            <div class="max-w-5xl mx-auto">
-                <div class="flex justify-between items-center mb-12">
-                    <h2 class="text-4xl font-bold text-slate-800">ประวัติการรักษาย้อนหลัง</h2>
-                    <button onclick="showCalendar()" class="bg-slate-100 px-6 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-slate-200">📅 ดูปฏิทินนัดหมาย</button>
-                </div>
-                <div id="history-list" class="space-y-10">
-                    </div>
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-4xl font-bold text-slate-800 mb-12">ประวัติการรักษาย้อนหลัง</h2>
+                <div id="history-list" class="space-y-8"></div>
             </div>
         </main>
 
         <main id="page-profile" class="absolute inset-0 z-40 bg-white p-12 overflow-y-auto hidden">
             <div class="max-w-2xl mx-auto text-center">
                 <h2 class="text-3xl font-bold text-slate-800 mb-12">ข้อมูลเภสัชกรผู้ดูแล</h2>
-                <div class="bg-slate-50 rounded-[4rem] p-12 flex flex-col items-center border shadow-sm">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Pharmacist" class="w-44 h-44 bg-white rounded-full border-8 border-blue-50 mb-8 p-2 shadow-inner" />
+                <div class="bg-slate-50 rounded-[4rem] p-12 border border-slate-100 flex flex-col items-center">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Pharmacist" class="w-48 h-48 bg-white rounded-full border-8 border-white shadow-xl mb-8 p-1" />
                     <h3 class="text-3xl font-bold text-slate-800">ภญ. สมศรี มีความสุข</h3>
-                    <p class="text-blue-600 font-bold mt-3 text-lg">หัวหน้าเภสัชกร (Pharmacy Dept.)</p>
-                    <div class="w-full mt-12 grid grid-cols-2 gap-6">
-                        <div class="bg-white p-6 rounded-3xl border text-sm font-bold text-slate-500 shadow-sm">ID: RX-8899</div>
-                        <div class="bg-white p-6 rounded-3xl border text-sm font-bold text-slate-500 shadow-sm">Status: Administrator</div>
+                    <p class="text-blue-600 font-bold mt-2">หัวหน้าเภสัชกร (Pharmacy Dept.)</p>
+                    <div class="grid grid-cols-2 gap-4 w-full mt-10">
+                        <div class="bg-white p-4 rounded-3xl border text-sm font-bold text-slate-400">ID: RX-8899</div>
+                        <div class="bg-white p-4 rounded-3xl border text-sm font-bold text-green-500">Status: Active</div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <script>
-        let stream = null;
+    <div id="chatModal" class="fixed inset-0 bg-black/20 backdrop-blur-sm hidden z-[150] flex items-center justify-center p-10">
+        <div class="bg-white w-full max-w-5xl h-full chat-container flex flex-row relative">
+            <div class="w-28 bg-slate-50 flex flex-col items-center py-10 gap-6 border-r">
+                <button onclick="selectChat('นพ. วิรัช')" class="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg relative">
+                    🩺 <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                </button>
+                <button onclick="selectChat('พย. มาลี')" class="w-14 h-14 bg-purple-500 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg relative">
+                    💉 <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                </button>
+            </div>
+            <div class="flex-1 flex flex-col bg-white">
+                <header class="h-20 bg-[#1e293b] flex items-center justify-between px-8 text-white">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">🩺</span>
+                        <div><p class="font-bold text-sm" id="chat-target">กำลังสนทนากับ: นพ. วิรัช</p><p class="text-[10px] text-green-400">Online</p></div>
+                    </div>
+                    <button onclick="closeModal('chatModal')" class="text-white/70 hover:text-white text-2xl">×</button>
+                </header>
+                <div id="chat-messages" class="flex-1 wa-bg p-10 overflow-y-auto flex flex-col gap-4"></div>
+                <footer class="p-6 bg-white border-t flex gap-4 items-center">
+                    <input type="text" id="chat-input" placeholder="พิมพ์ข้อความ..." class="flex-1 pill-input outline-none">
+                    <button onclick="sendMessage()" class="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg">➤</button>
+                </footer>
+            </div>
+        </div>
+    </div>
 
-        // ข้อมูลประวัติ 7 ครั้งล่าสุด
-        const historyData = [
-            { date: "12 มกราคม 2569", symp: "ความดันโลหิตสูง และมีอาการปวดหัวตื้อๆ ตอนเช้า", diag: "Essential Hypertension", drugs: [{n:"Amlodipine", d:"5mg", q:"30 เม็ด", w:"1 หลังอาหารเช้า"}, {n:"Losartan", d:"50mg", q:"30 เม็ด", w:"1 หลังอาหารเช้า"}], next: "11 กุมภาพันธ์ 2569" },
-            { date: "15 ธันวาคม 2568", symp: "มาติดตามอาการความดัน", diag: "Hypertension (Stable)", drugs: [{n:"Amlodipine", d:"5mg", q:"30 เม็ด", w:"1 หลังอาหารเช้า"}], next: "12 มกราคม 2569" },
-            { date: "10 พฤศจิกายน 2568", symp: "ปวดเข่า เดินไม่ถนัด", diag: "Osteoarthritis (ข้อเข่าเสื่อม)", drugs: [{n:"NSAIDs", d:"400mg", q:"10 เม็ด", w:"1 หลังอาหารทันที"}], next: "15 ธันวาคม 2568" },
-            { date: "05 ตุลาคม 2568", symp: "ไข้สูง เจ็บคอ", diag: "Acute Pharyngitis", drugs: [{n:"Amoxicillin", d:"500mg", q:"20 เม็ด", w:"1 ก่อนอาหาร 3 มื้อ"}], next: "-" },
-            { date: "01 กันยายน 2568", symp: "ตรวจสุขภาพประจำปี", diag: "Normal Profile", drugs: [{n:"Vitamin B", d:"Mix", q:"30 เม็ด", w:"1 หลังอาหารเช้า"}], next: "05 ตุลาคม 2568" },
-            { date: "20 สิงหาคม 2568", symp: "จุกเสียดลิ้นปี่", diag: "GERD (กรดไหลย้อน)", drugs: [{n:"Antacid Gel", d:"15ml", q:"2 ขวด", w:"1 ช้อนโต๊ะ หลังอาหาร"}], next: "01 กันยายน 2568" },
-            { date: "15 กรกฎาคม 2568", symp: "ผื่นคันตามแขนขา", diag: "Allergic Dermatitis", drugs: [{n:"CPM", d:"4mg", q:"10 เม็ด", w:"1 ก่อนนอน"}], next: "-" }
-        ];
+    <script>
+        // ฟังก์ชัน Logout (กดที่ตัว M)
+        function handleLogout() {
+            Swal.fire({
+                title: 'ยืนยันการออกจากระบบ?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'ออกจากระบบ',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                }
+            })
+        }
+
+        function switchPage(page) {
+            ['page-main', 'page-history', 'page-profile'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['nav-home', 'nav-history', 'nav-profile'].forEach(id => document.getElementById(id).classList.remove('sidebar-active'));
+            document.getElementById(`page-${page}`).classList.remove('hidden');
+            document.getElementById(`nav-${page === 'main' ? 'home' : (page === 'history' ? 'history' : 'profile')}`).classList.add('sidebar-active');
+            if(page === 'history') renderHistory();
+        }
 
         function renderHistory() {
+            const historyData = [
+                { date: "12 มกราคม 2569", symp: "ความดันโลหิตสูง และมีอาการปวดหัวตื้อๆ ตอนเช้า", diag: "Essential Hypertension", next: "11 กุมภาพันธ์ 2569" },
+                { date: "15 ธันวาคม 2568", symp: "มาติดตามอาการความดัน", diag: "Hypertension (Stable)", next: "12 มกราคม 2569" }
+            ];
             const list = document.getElementById('history-list');
             list.innerHTML = historyData.map(h => `
-                <div class="bg-white border rounded-[3rem] overflow-hidden shadow-xl mb-8">
-                    <div class="bg-slate-800 p-8 text-white flex justify-between items-center">
-                        <div>
-                            <p class="text-[10px] opacity-60 uppercase font-bold tracking-widest mb-1">รักษาเมื่อวันที่</p>
-                            <p class="text-2xl font-bold">${h.date}</p>
-                        </div>
-                        <span class="bg-green-500 px-5 py-2 rounded-full text-xs font-bold shadow-lg">สำเร็จ (Completed)</span>
+                <div class="history-card mb-6">
+                    <div class="history-header">
+                        <span class="font-bold text-xl">${h.date}</span>
+                        <span class="bg-blue-600 px-4 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase">Completed</span>
                     </div>
-                    <div class="p-10 grid grid-cols-2 gap-12 border-b">
-                        <div class="space-y-4">
-                            <p class="text-blue-600 font-bold text-sm flex items-center gap-2">🩺 อาการที่มาในครั้งนั้น</p>
-                            <p class="text-xl font-bold text-slate-800 leading-relaxed">${h.symp}</p>
-                            <p class="text-xs text-slate-400">วินิจฉัยโดยแพทย์: ${h.diag}</p>
+                    <div class="p-8">
+                        <p class="text-blue-600 font-bold text-xs mb-3 flex items-center gap-2">🩺 อาการและวินิจฉัย</p>
+                        <p class="text-slate-800 font-bold text-lg mb-6">${h.symp}</p>
+                        <div class="bg-slate-50 p-5 rounded-3xl text-xs font-bold text-slate-500 border border-slate-100">
+                            วินิจฉัย: ${h.diag} | นัดครั้งถัดไป: ${h.next}
                         </div>
-                        <div class="space-y-4">
-                            <p class="text-orange-600 font-bold text-sm flex items-center gap-2">📅 นัดหมายถัดไปในตอนนั้น</p>
-                            <p class="text-xl font-bold text-slate-800">${h.next}</p>
-                        </div>
-                    </div>
-                    <div class="p-10">
-                        <p class="text-red-500 font-bold text-sm mb-6 flex items-center gap-2">💊 รายการยาที่ได้รับ (Medication Record)</p>
-                        <table class="w-full text-left text-sm border-collapse">
-                            <thead class="text-slate-400 border-b">
-                                <tr><th class="py-4">ชื่อยา (Drug)</th><th class="py-4">โดส</th><th class="py-4">จำนวน</th><th class="py-4 text-right">วิธีใช้</th></tr>
-                            </thead>
-                            <tbody class="font-bold text-slate-700 divide-y">
-                                ${h.drugs.map(d => `
-                                    <tr>
-                                        <td class="py-4">${d.n}</td>
-                                        <td>${d.d}</td>
-                                        <td>${d.q}</td>
-                                        <td class="text-right text-slate-500">${d.w}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             `).join('');
         }
 
-        // ระบบสลับหน้า
-        function switchPage(page) {
-            ['page-main', 'page-history', 'page-profile'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            ['nav-home', 'nav-history', 'nav-profile'].forEach(id => document.getElementById(id)?.classList.remove('active-tab'));
-            document.getElementById(`page-${page}`).classList.remove('hidden');
-            const navBtn = document.getElementById(page === 'main' ? 'nav-home' : `nav-${page}`);
-            if(navBtn) navBtn.classList.add('active-tab');
-            if(page === 'history') renderHistory();
-        }
-
-        // ระบบเลือกบุคคลที่คุยด้วย
-        function selectChat(name, status, icon) {
-            document.getElementById('chat-target').innerText = icon + " กำลังสนทนากับ: " + name;
-            document.getElementById('chat-status').innerText = status;
-            document.getElementById('chat-status').className = status === 'Online' ? "text-[10px] text-green-500 font-bold" : "text-[10px] text-slate-400 font-bold";
-            document.getElementById('chat-messages').innerHTML = `<div class="bg-white/50 p-3 text-center rounded-2xl mb-6 italic text-xs border">ระบบเชื่อมต่อกับ ${name} เรียบร้อยแล้ว</div>`;
-        }
-
-        function showCalendar() {
-            Swal.fire({
-                title: '📅 ปฏิทินนัดหมาย',
-                html: '<div class="p-4 text-center">เปิดตารางการรักษาและนัดหมายของ <strong>คุณสมปอง ใจดี</strong><br><br><div class="bg-blue-50 p-4 rounded-xl text-blue-800 text-sm">📍 ครั้งถัดไป: 15 มีนาคม 2569</div></div>',
-                icon: 'info',
-                confirmButtonText: 'รับทราบ',
-                confirmButtonColor: '#2563eb'
-            });
-        }
-
-        // กล้องสแกนยา
-        async function startCamera() {
-            document.getElementById('scannerModal').classList.remove('hidden');
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                document.getElementById('camera-view').srcObject = stream;
-            } catch (err) { Swal.fire('Error', 'ไม่สามารถเปิดกล้องได้', 'error'); }
-        }
-        function stopCamera() {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            document.getElementById('scannerModal').classList.add('hidden');
-        }
-        function handleScanResult() {
-            const code = document.getElementById('manualCode').value;
-            stopCamera();
-            Swal.fire('สแกนสำเร็จ', `รหัสยา: ${code || 'WAR-5MG-001'}`, 'success');
+        function selectChat(name) {
+            document.getElementById('chat-target').innerText = `กำลังสนทนากับ: ${name}`;
+            document.getElementById('chat-messages').innerHTML = `<div class="self-center bg-white/80 px-6 py-2 rounded-full text-xs font-bold text-slate-400 shadow-sm mb-4">เชื่อมต่อกับ ${name} สำเร็จ</div>`;
         }
 
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -313,14 +245,15 @@
         function sendMessage() {
             const input = document.getElementById('chat-input');
             if(!input.value) return;
-            const msgBox = document.getElementById('chat-messages');
             const div = document.createElement('div');
-            div.className = "bg-blue-600 text-white p-4 rounded-3xl rounded-tr-none self-end max-w-[85%] shadow-md ml-auto mb-2 text-sm";
+            div.className = "self-end bg-blue-600 text-white p-4 px-6 rounded-[2rem] rounded-tr-none text-sm font-semibold shadow-md max-w-[70%]";
             div.innerText = input.value;
-            msgBox.appendChild(div);
+            document.getElementById('chat-messages').appendChild(div);
             input.value = '';
-            msgBox.scrollTop = msgBox.scrollHeight;
+            document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
         }
+
+        async function startCamera() { Swal.fire('Scanner', 'กำลังเปิดกล้อง...', 'info'); }
     </script>
 </body>
 </html>
