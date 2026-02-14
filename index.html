@@ -61,7 +61,7 @@
         </div>
 
         <div class="flex flex-col gap-4 text-slate-400 text-xl mt-auto">
-            <button onclick="Swal.fire('Settings', 'ระบบตั้งค่ากำลังพัฒนา', 'info')" id="nav-setting" class="p-3 hover:bg-slate-800 rounded-xl" title="การตั้งค่า">⚙️</button>
+            <button onclick="window.location.href='setting.html'" id="nav-setting" class="p-3 hover:bg-slate-800 rounded-xl" title="การตั้งค่า">⚙️</button>
         </div>
     </nav>
 
@@ -138,7 +138,7 @@
                         <span class="absolute -top-3 left-10 bg-blue-600 text-white px-6 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Send Concern to Doctor</span>
                         <input type="text" id="concern-drug" placeholder="ยา: ระบุชื่อยาที่มีปัญหา..." class="w-full border-b border-slate-200 py-2 mb-4 outline-none text-sm font-bold">
                         <div class="flex flex-wrap gap-5 mb-6 text-xs font-bold text-slate-500">
-                            <span class="text-slate-800">แก้ไข: </span>
+                            <span class="text-slate-800">แก้ไข:</span>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="oc" value="Dose"> Dose</label>
                             <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="oc" value="เวลา"> เวลา</label>
                             <label class="flex items-center gap-2 text-blue-600 font-extrabold cursor-pointer"><input type="radio" name="oc" value="กินตัวนี้แล้วเสี่ยง" checked> กินตัวนี้แล้วเสี่ยง</label>
@@ -302,7 +302,6 @@
     </div>
 
     <script>
-        // ข้อมูลจำลองสำหรับประวัติ
         const hData = [
             { d: "14 ก.พ. 69", sym: "ตรวจตามนัด", doc: "นพ. วิรัช", med: "Warfarin 5mg, Paracetamol", detail: "คนไข้มาตรวจตามนัดเพื่อดูค่า INR ผลเลือดปกติ" },
             { d: "13 ก.พ. 69", sym: "ปวดฟัน", doc: "ทพ. สมเกียรติ", med: "Amoxicillin 500mg, Ibuprofen", detail: "เหงือกอักเสบและปวดฟันกราม" },
@@ -320,7 +319,6 @@
             if(p !== 'scan' && isCamOpen) toggleCam();
         }
 
-        // --- Chat Logic ---
         function startChat(name) {
             selectChat(name);
             switchPage('chat');
@@ -372,7 +370,6 @@
             });
         }
 
-        // --- History Logic ---
         function renderHistory() {
             document.getElementById('history-list').innerHTML = hData.map((h, index) => `
                 <div class="bg-white p-6 rounded-3xl flex justify-between items-center shadow-sm border border-slate-100">
@@ -399,7 +396,6 @@
             document.getElementById('history-modal').classList.add('active');
         }
 
-        // --- Auth Logic ---
         function logout() {
             Swal.fire({ 
                 title: 'ออกจากระบบ?', 
@@ -412,8 +408,8 @@
                 cancelButtonText: 'ยกเลิก' 
             }).then(res => {
                 if(res.isConfirmed) { 
-                    localStorage.clear(); // ล้างข้อมูลการ Login
-                    window.location.href = 'login.html'; // ส่งกลับหน้า Login
+                    localStorage.clear();
+                    window.location.href = 'login.html';
                 }
             });
         }
@@ -425,7 +421,6 @@
             Swal.fire('สำเร็จ', `พบข้อมูลยา ${code} ในฐานข้อมูลเภสัชกรรม`, 'success'); 
         }
 
-        // --- Camera Logic ---
         let isCamOpen = false;
         async function toggleCam() {
             const v = document.getElementById('v'), p = document.getElementById('p'), btn = document.getElementById('btn-cam');
