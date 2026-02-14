@@ -24,11 +24,17 @@
         .modal-content { background: white; width: 90%; max-width: 500px; border-radius: 2.5rem; padding: 2.5rem; transform: translateY(20px); transition: all 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
         .modal-overlay.active .modal-content { transform: translateY(0); }
     </style>
+    <script>
+        // ตรวจสอบการ Login เบื้องต้น (ถ้าไม่มีค่าใน localStorage ให้กลับหน้า login)
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+    </script>
 </head>
 <body class="h-screen flex overflow-hidden">
 
     <nav class="w-20 bg-[#0f172a] flex flex-col items-center py-8 gap-6 shrink-0 z-50">
-        <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">M+</div>
+        <div onclick="logout()" title="ออกจากระบบ" class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg cursor-pointer hover:bg-red-600 transition-all hover:scale-105 active:scale-95">M+</div>
         
         <div class="flex flex-col gap-4 text-slate-400 text-xl flex-1">
             <button onclick="switchPage('main')" id="nav-main" class="p-3 hover:bg-slate-800 rounded-xl sidebar-active">🏠</button>
@@ -240,6 +246,28 @@
     </div>
 
     <script>
+        // ฟังก์ชัน Logout (เพิ่มใหม่)
+        function logout() {
+            Swal.fire({
+                title: 'ยืนยันการออกจากระบบ?',
+                text: "คุณต้องการออกจากระบบ Medlink หรือไม่",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'ออกจากระบบ',
+                cancelButtonText: 'ยกเลิก',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        // --- ส่วนเดิมทั้งหมด ---
         function switchPage(p) {
             ['page-main', 'page-scan', 'page-chat', 'page-history'].forEach(id => document.getElementById(id).classList.add('hidden'));
             ['nav-main', 'nav-scan', 'nav-chat', 'nav-history'].forEach(id => document.getElementById(id).classList.remove('sidebar-active'));
