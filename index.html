@@ -12,16 +12,13 @@
         .hidden { display: none; }
         .sidebar-active { background-color: #2563eb; color: white !important; }
         
-        /* สีกรอบและพื้นหลังตาม Mockup ลายเส้น */
         .col-patient { background-color: #f3f4f6; border-right: 1px solid #e5e7eb; } 
         .col-main { background-color: #ffffff; } 
         .col-ai { background-color: #eff6ff; border-left: 1px solid #dbeafe; } 
         
-        /* แชทสไตล์ */
         .msg-me { align-self: flex-end; background-color: #95ed77; border-radius: 1rem 0 1rem 1rem; padding: 10px 15px; margin-bottom: 8px; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .msg-them { align-self: flex-start; background-color: #ffffff; border-radius: 0 1rem 1rem 1rem; padding: 10px 15px; margin-bottom: 8px; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
-        /* Modal Styles */
         .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); display: flex; align-items: center; justify-content: center; z-index: 100; visibility: hidden; opacity: 0; transition: all 0.3s ease; backdrop-filter: blur(4px); }
         .modal-overlay.active { visibility: visible; opacity: 1; }
         .modal-content { background: white; width: 90%; max-width: 500px; border-radius: 2.5rem; padding: 2.5rem; transform: translateY(20px); transition: all 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
@@ -32,11 +29,16 @@
 
     <nav class="w-20 bg-[#0f172a] flex flex-col items-center py-8 gap-6 shrink-0 z-50">
         <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">M+</div>
-        <div class="flex flex-col gap-4 text-slate-400 text-xl">
+        
+        <div class="flex flex-col gap-4 text-slate-400 text-xl flex-1">
             <button onclick="switchPage('main')" id="nav-main" class="p-3 hover:bg-slate-800 rounded-xl sidebar-active">🏠</button>
             <button onclick="switchPage('scan')" id="nav-scan" class="p-3 hover:bg-slate-800 rounded-xl">📷</button>
             <button onclick="switchPage('chat')" id="nav-chat" class="p-3 hover:bg-slate-800 rounded-xl">💬</button>
             <button onclick="switchPage('history')" id="nav-history" class="p-3 hover:bg-slate-800 rounded-xl">📜</button>
+        </div>
+
+        <div class="flex flex-col gap-4 text-slate-400 text-xl mt-auto">
+            <button onclick="window.location.href='setting.html'" id="nav-setting" class="p-3 hover:bg-slate-800 rounded-xl" title="การตั้งค่า">⚙️</button>
         </div>
     </nav>
 
@@ -184,7 +186,8 @@
                     </div>
                 </div>
             </aside>
-            <div class="flex-1 flex flex-col bg-[#abc1d1]"> <header class="p-5 bg-white border-b font-bold text-slate-700 shadow-sm" id="chat-header">โปรดเลือกบุคลากรเพื่อเริ่มสนทนา</header>
+            <div class="flex-1 flex flex-col bg-[#abc1d1]"> 
+                <header class="p-5 bg-white border-b font-bold text-slate-700 shadow-sm" id="chat-header">โปรดเลือกบุคลากรเพื่อเริ่มสนทนา</header>
                 <div id="chat-messages" class="flex-1 p-6 overflow-y-auto flex flex-col"></div>
                 <div class="p-5 bg-white flex gap-3 border-t">
                     <input type="text" id="chat-input" placeholder="พิมพ์ข้อความที่ต้องการปรึกษา..." class="flex-1 p-4 px-7 bg-slate-100 rounded-full outline-none border border-slate-200 text-sm font-medium shadow-inner">
@@ -197,17 +200,30 @@
             <div class="max-w-2xl mx-auto">
                 <h2 class="text-3xl font-bold mb-2">ระบบสแกนตรวจสอบยา</h2>
                 <p class="text-slate-400 mb-10 font-bold uppercase text-[10px] tracking-[0.3em]">Pharmacy Verification System</p>
+                
                 <div class="bg-black rounded-[3rem] overflow-hidden mb-8 shadow-2xl relative border-[12px] border-slate-100 aspect-video flex items-center justify-center">
                     <video id="v" autoplay playsinline class="hidden w-full h-full object-cover"></video>
                     <div id="p" class="text-white/20 italic font-bold text-xl uppercase tracking-widest">Waiting for Camera Access...</div>
                 </div>
-                <button onclick="toggleCam()" id="btn-cam" class="bg-blue-600 text-white px-14 py-4 rounded-3xl font-bold shadow-2xl hover:bg-blue-700 transition-all text-sm uppercase tracking-widest">เปิดกล้องสแกน</button>
+
+                <button onclick="toggleCam()" id="btn-cam" class="bg-blue-600 text-white px-14 py-4 rounded-3xl font-bold shadow-2xl hover:bg-blue-700 transition-all text-sm uppercase tracking-widest mb-10">เปิดกล้องสแกน</button>
+
+                <div class="flex items-center gap-4 mb-8">
+                    <hr class="flex-1 border-slate-200">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">หรือ กรอกรหัสยาด้วยตนเอง</span>
+                    <hr class="flex-1 border-slate-200">
+                </div>
+
+                <div class="flex gap-3 bg-slate-50 p-3 rounded-[2rem] border border-slate-100">
+                    <input type="text" id="manual-drug-code" placeholder="เช่น WARF-05" class="flex-1 bg-transparent p-4 px-6 outline-none font-bold text-slate-700 placeholder-slate-300">
+                    <button onclick="verifyDrugCode()" class="bg-[#0f172a] text-white px-10 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-black transition-all shadow-lg">ตรวจสอบรหัสยา</button>
+                </div>
             </div>
         </div>
 
         <div id="page-history" class="absolute inset-0 z-40 bg-slate-50 p-12 overflow-y-auto hidden">
-            <h2 class="text-3xl font-bold mb-10 border-l-[12px] border-blue-600 pl-6 uppercase tracking-tight">ประวัติการสั่งจ่ายย้อนหลัง</h2>
-            <div id="history-list" class="max-w-4xl space-y-4"></div>
+            <h2 class="text-3xl font-bold mb-10 border-l-[12px] border-blue-600 pl-6 uppercase tracking-tight">ประวัติการสั่งจ่ายย้อนหลัง (7 วันล่าสุด)</h2>
+            <div id="history-list" class="max-w-4xl space-y-4 pb-10"></div>
         </div>
 
     </div>
@@ -218,14 +234,12 @@
                 <h3 id="modal-title" class="text-2xl font-bold text-slate-800 tracking-tight">รายละเอียดบันทึก</h3>
                 <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition-colors text-2xl leading-none">✕</button>
             </div>
-            <div id="modal-body" class="space-y-4">
-                </div>
+            <div id="modal-body" class="space-y-4"></div>
             <button onclick="closeModal()" class="w-full mt-8 py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-lg hover:bg-black transition-all">ปิดหน้าต่าง</button>
         </div>
     </div>
 
     <script>
-        // ระบบสลับหน้า
         function switchPage(p) {
             ['page-main', 'page-scan', 'page-chat', 'page-history'].forEach(id => document.getElementById(id).classList.add('hidden'));
             ['nav-main', 'nav-scan', 'nav-chat', 'nav-history'].forEach(id => document.getElementById(id).classList.remove('sidebar-active'));
@@ -235,23 +249,21 @@
             if(p !== 'scan' && isCamOpen) toggleCam();
         }
 
-        // เชื่อมต่อโรงพยาบาล
         let isConnected = true;
         function toggleHospitalConnect() {
             isConnected = !isConnected;
             const btn = document.getElementById('btn-hospital');
             if(isConnected) {
                 btn.innerHTML = `<span id="hospital-dot" class="w-2 h-2 bg-white rounded-full animate-pulse"></span> Connect to Hospital`;
-                btn.className = "bg-green-500 text-white py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-md";
+                btn.className = "bg-green-500 text-white py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-md hover:bg-green-600 transition";
                 Swal.fire('Connected', 'เชื่อมต่อฐานข้อมูลส่วนกลางสำเร็จ', 'success');
             } else {
                 btn.innerHTML = `<span class="w-2 h-2 bg-white rounded-full"></span> Offline Mode`;
-                btn.className = "bg-red-500 text-white py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-md";
+                btn.className = "bg-red-500 text-white py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-md hover:bg-red-600 transition";
                 Swal.fire('Offline', 'เข้าสู่โหมดประมวลผลภายใน (Local)', 'warning');
             }
         }
 
-        // ระบบแชท
         function selectChat(name, icon) {
             document.getElementById('chat-header').innerText = `สนทนากับ: ${name} ${icon}`;
             document.getElementById('chat-messages').innerHTML = `<div class="msg-them">สวัสดีครับ ยินดีที่ได้คุยครับ มีข้อกังวลเรื่องการจ่ายยาของคนไข้ HN 123-45-67 ใช่ไหมครับ?</div>`;
@@ -266,7 +278,6 @@
             document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
         }
 
-        // ระบบกล้อง
         let isCamOpen = false;
         async function toggleCam() {
             const v = document.getElementById('v');
@@ -278,30 +289,48 @@
                     document.getElementById('btn-cam').innerText = "ปิดกล้อง"; isCamOpen = true;
                 } catch(e) { Swal.fire('Error', 'ไม่พบอุปกรณ์กล้อง', 'error'); }
             } else {
-                v.srcObject.getTracks().forEach(t => t.stop());
+                if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
                 v.classList.add('hidden'); p.classList.remove('hidden');
                 document.getElementById('btn-cam').innerText = "เปิดกล้องสแกน"; isCamOpen = false;
             }
         }
 
-        // ระบบประวัติ และ Modal รายละเอียด
+        function verifyDrugCode() {
+            const code = document.getElementById('manual-drug-code').value;
+            if(!code) { Swal.fire('แจ้งเตือน', 'กรุณาระบุรหัสยาที่ต้องการตรวจสอบ', 'info'); return; }
+            Swal.fire({
+                title: 'กำลังตรวจสอบ...',
+                text: `รหัสยา ${code} กำลังถูกประมวลผลผ่านฐานข้อมูลกลาง`,
+                timer: 1500,
+                showConfirmButton: false,
+                willOpen: () => { Swal.showLoading(); }
+            }).then(() => {
+                Swal.fire('ตรวจสอบสำเร็จ', `พบข้อมูลยา ${code} ในระบบ พร้อมจ่ายได้`, 'success');
+            });
+        }
+
         const hData = [
-            { d: "10 ก.พ. 69", sym: "แน่นหน้าอก", doc: "นพ. วิรัช", detail: "คนไข้แจ้งว่าเริ่มมีอาการแน่นหน้าอกหลังออกกำลังกาย ตรวจคลื่นไฟฟ้าหัวใจเบื้องต้นปกติ จ่ายยาบรรเทาอาการและให้พักผ่อน" },
-            { d: "15 ม.ค. 69", sym: "ความดันสูง", doc: "พญ. นลิน", detail: "ความดันโลหิตวัดได้ 150/95 mmHg แนะนำให้ปรับพฤติกรรมการทานอาหาร ลดเค็ม และเริ่มให้ยาลดความดันกลุ่ม Enalapril" },
-            { d: "12 ธ.ค. 68", sym: "นัดติดตามผลเลือด", doc: "นพ. วิรัช", detail: "ผลเลือดอยู่ในเกณฑ์ดี ค่าไตและตับปกติ ระดับไขมันในเลือดลดลงเล็กน้อย นัดติดตามผลอีกครั้งใน 3 เดือน" }
+            { d: "14 ก.พ. 69", sym: "ตรวจตามนัด (Follow-up)", doc: "นพ. วิรัช", med: "Warfarin 5mg, Paracetamol 500mg", detail: "คนไข้มาตรวจตามนัดเพื่อดูค่า INR ผลเลือดปกติ แต่อาการปวดเมื่อยยังมีเล็กน้อย" },
+            { d: "13 ก.พ. 69", sym: "ปวดฟัน", doc: "ทพ. สมเกียรติ", med: "Amoxicillin 500mg, Ibuprofen 400mg", detail: "คนไข้มีอาการเหงือกอักเสบและปวดฟันกราม จ่ายยาฆ่าเชื้อและยาแก้ปวด" },
+            { d: "12 ก.พ. 69", sym: "เป็นหวัด/ไอ", doc: "พญ. กานดา", med: "Bromhexine 8mg, Loratadine 10mg", detail: "คนไข้มีอาการไอแห้งและมีน้ำมูกใส ไม่มีไข้ แนะนำให้พักผ่อนมากๆ" },
+            { d: "11 ก.พ. 69", sym: "ท้องเสีย", doc: "นพ. มานิต", med: "ORS, Loperamide 2mg", detail: "คนไข้ถ่ายเหลว 3-4 ครั้งต่อวัน คาดว่าเกิดจากอาหารไม่สะอาด ให้จิบน้ำเกลือแร่สม่ำเสมอ" },
+            { d: "10 ก.พ. 69", sym: "แน่นหน้าอก", doc: "นพ. วิรัช", med: "Aspirin 81mg, Isosorbide Dinitrate", detail: "คนไข้แจ้งว่าเริ่มมีอาการแน่นหน้าอกหลังออกกำลังกาย ตรวจคลื่นไฟฟ้าหัวใจเบื้องต้นปกติ" },
+            { d: "09 ก.พ. 69", sym: "ผื่นคันตามตัว", doc: "พญ. นภัส", med: "CPM, Triamcinolone Cream", detail: "คนไข้สัมผัสสารเคมีบางอย่างจนเกิดผื่นแดงคัน จ่ายยาแก้แพ้และยาทาภายนอก" },
+            { d: "08 ก.พ. 69", sym: "ปวดกล้ามเนื้อหลัง", doc: "นพ. ชัยรัตน์", med: "Diclofenac 25mg, Orphenadrine", detail: "คนไข้มีอาการปวดหลังจากยกของหนัก ให้ยาคลายกล้ามเนื้อและยาแก้ปวด" }
         ];
 
         function renderHistory() {
             document.getElementById('history-list').innerHTML = hData.map((h, index) => `
-                <div class="bg-white p-6 rounded-3xl flex justify-between items-center shadow-sm border border-slate-100 hover:border-blue-300 transition-all">
-                    <div class="flex items-center gap-6">
-                        <div class="bg-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-[10px] text-center">${h.d.replace(' ', '<br>')}</div>
-                        <div>
+                <div class="bg-white p-6 rounded-3xl flex justify-between items-center shadow-sm border border-slate-100 hover:border-blue-300 transition-all group">
+                    <div class="flex items-center gap-6 overflow-hidden">
+                        <div class="bg-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-[10px] text-center shrink-0">${h.d.replace(' ', '<br>')}</div>
+                        <div class="truncate">
                             <h4 class="font-bold text-lg text-slate-700">วินิจฉัย: ${h.sym}</h4>
-                            <p class="text-xs text-slate-400 font-bold uppercase tracking-tighter">แพทย์ผู้ดูแล: ${h.doc}</p>
+                            <p class="text-[11px] text-blue-500 font-bold italic truncate">💊 ยา: ${h.med}</p>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">แพทย์: ${h.doc}</p>
                         </div>
                     </div>
-                    <button onclick="showHistoryDetail(${index})" class="bg-slate-900 text-white px-8 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-md hover:bg-black transition-colors">ดูบันทึก</button>
+                    <button onclick="showHistoryDetail(${index})" class="bg-slate-900 text-white px-8 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-md hover:bg-black transition-colors shrink-0">ดูบันทึก</button>
                 </div>
             `).join('');
         }
@@ -310,33 +339,34 @@
             const data = hData[index];
             const modal = document.getElementById('history-modal');
             const body = document.getElementById('modal-body');
-            
             body.innerHTML = `
-                <div class="p-4 bg-blue-50 rounded-2xl">
-                    <p class="text-[10px] font-bold text-blue-600 uppercase mb-1">วันที่ตรวจ</p>
-                    <p class="font-bold text-slate-700">${data.d}</p>
+                <div class="flex gap-4">
+                    <div class="flex-1 p-4 bg-blue-50 rounded-2xl">
+                        <p class="text-[10px] font-bold text-blue-600 uppercase mb-1">วันที่ตรวจ</p>
+                        <p class="font-bold text-slate-700">${data.d}</p>
+                    </div>
+                    <div class="flex-1 p-4 border border-slate-100 rounded-2xl">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">แพทย์ผู้บันทึก</p>
+                        <p class="font-bold text-slate-700">${data.doc}</p>
+                    </div>
                 </div>
                 <div class="p-4 border border-slate-100 rounded-2xl">
                     <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">อาการ / วินิจฉัย</p>
                     <p class="font-bold text-slate-700 text-lg">${data.sym}</p>
                 </div>
-                <div class="p-4 border border-slate-100 rounded-2xl">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">แพทย์ผู้บันทึก</p>
-                    <p class="font-bold text-slate-700">${data.doc}</p>
+                <div class="p-4 bg-orange-50 border border-orange-100 rounded-2xl">
+                    <p class="text-[10px] font-bold text-orange-600 uppercase mb-1">💊 รายการยาที่สั่งจ่าย</p>
+                    <p class="font-bold text-slate-800">${data.med}</p>
                 </div>
                 <div class="p-4 border border-slate-100 rounded-2xl">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">รายละเอียดการรักษา</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">รายละเอียดการรักษาเพิ่มเติม</p>
                     <p class="text-sm text-slate-600 leading-relaxed">${data.detail}</p>
                 </div>
             `;
-            
             modal.classList.add('active');
         }
 
-        function closeModal() {
-            document.getElementById('history-modal').classList.remove('active');
-        }
+        function closeModal() { document.getElementById('history-modal').classList.remove('active'); }
     </script>
 </body>
 </html>
-index.html
