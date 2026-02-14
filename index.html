@@ -32,17 +32,25 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
     <script>
-        // ระบบ Login Guard (จำลอง)
+        // 1. [GUARD] ตรวจสอบการ Login ทันทีที่เข้าหน้าเว็บ
         if (localStorage.getItem('isLoggedIn') !== 'true') {
-            localStorage.setItem('isLoggedIn', 'true'); // บังคับ true เพื่อการทดสอบ
-            localStorage.setItem('user', 'fat nornor');
+            window.location.href = 'login.html';
         }
+
+        // ฟังก์ชันแสดงชื่อผู้ใช้เมื่อโหลดหน้าเว็บ
+        window.addEventListener('DOMContentLoaded', () => {
+            const username = localStorage.getItem('user') || 'User';
+            const displayElements = document.querySelectorAll('#display-user-name, #chat-welcome-name');
+            displayElements.forEach(el => {
+                if(el) el.innerText = username;
+            });
+        });
     </script>
 </head>
 <body class="h-screen flex overflow-hidden">
 
     <nav class="w-20 bg-[#0f172a] flex flex-col items-center py-8 gap-6 shrink-0 z-50">
-        <div onclick="logout()" title="ออกจากระบบ" class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg cursor-pointer hover:bg-red-600 transition-all hover:scale-105 active:scale-95">M+</div>
+        <div onclick="logout()" title="ออกจากระบบ (Logout)" class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg cursor-pointer hover:bg-red-600 transition-all hover:scale-105 active:scale-95">M+</div>
         
         <div class="flex flex-col gap-4 text-slate-400 text-xl flex-1">
             <button onclick="switchPage('main')" id="nav-main" class="p-3 hover:bg-slate-800 rounded-xl sidebar-active">🏠</button>
@@ -227,8 +235,10 @@
             <div class="max-w-2xl mx-auto">
                 <h2 class="text-3xl font-bold mb-10 border-l-[12px] border-blue-600 pl-6 text-left uppercase tracking-tight">โปรไฟล์ผู้ใช้งาน</h2>
                 <div class="bg-slate-50 p-10 rounded-[3rem] border border-slate-100 shadow-inner">
-                    <img id="profile-img" src="https://api.dicebear.com/7.x/avataaars/svg?seed=fatnornor" class="w-32 h-32 mx-auto mb-6 bg-white rounded-full border-4 border-white shadow-md">
-                    <h3 id="display-user-name" class="text-2xl font-bold text-slate-800 mb-2 italic">fat nornor</h3>
+                    <img id="profile-img" src="https://api.dicebear.com/7.x/avataaars/svg?seed=doctor" class="w-32 h-32 mx-auto mb-6 bg-white rounded-full border-4 border-white shadow-md">
+                    
+                    <h3 id="display-user-name" class="text-2xl font-bold text-slate-800 mb-2 italic">User</h3>
+                    
                     <p class="text-blue-600 font-bold uppercase text-xs tracking-widest mb-8">ตำแหน่ง: เภสัชกร / แพทย์ประจำบ้าน</p>
                     
                     <div class="space-y-4 text-left">
@@ -292,14 +302,13 @@
     </div>
 
     <script>
+        // ข้อมูลจำลองสำหรับประวัติ
         const hData = [
             { d: "14 ก.พ. 69", sym: "ตรวจตามนัด", doc: "นพ. วิรัช", med: "Warfarin 5mg, Paracetamol", detail: "คนไข้มาตรวจตามนัดเพื่อดูค่า INR ผลเลือดปกติ" },
             { d: "13 ก.พ. 69", sym: "ปวดฟัน", doc: "ทพ. สมเกียรติ", med: "Amoxicillin 500mg, Ibuprofen", detail: "เหงือกอักเสบและปวดฟันกราม" },
             { d: "12 ก.พ. 69", sym: "เป็นหวัด/ไอ", doc: "พญ. กานดา", med: "Bromhexine, Loratadine", detail: "คนไข้มีอาการไอแห้ง ไม่มีไข้" },
             { d: "11 ก.พ. 69", sym: "ท้องเสีย", doc: "นพ. มานิต", med: "ORS, Loperamide", detail: "ถ่ายเหลว 3-4 ครั้งต่อวัน" },
-            { d: "10 ก.พ. 69", sym: "แน่นหน้าอก", doc: "นพ. วิรัช", med: "Aspirin 81mg, Isosorbide", detail: "แน่นหน้าอกหลังออกกำลังกาย EKG ปกติ" },
-            { d: "09 ก.พ. 69", sym: "ผื่นคันตามตัว", doc: "พญ. นภัส", med: "CPM, Triamcinolone", detail: "สัมผัสสารเคมีจนเกิดผื่นแดง" },
-            { d: "08 ก.พ. 69", sym: "ปวดกล้ามเนื้อหลัง", doc: "นพ. ชัยรัตน์", med: "Diclofenac, Orphenadrine", detail: "ยกของหนัก มีอาการปวดหลังเฉียบพลัน" }
+            { d: "10 ก.พ. 69", sym: "แน่นหน้าอก", doc: "นพ. วิรัช", med: "Aspirin 81mg, Isosorbide", detail: "แน่นหน้าอกหลังออกกำลังกาย EKG ปกติ" }
         ];
 
         function switchPage(p) {
@@ -318,10 +327,11 @@
         }
 
         function selectChat(name) {
+            const currentUser = localStorage.getItem('user') || 'User';
             document.getElementById('active-chat-name').innerText = name;
             const img = name.includes('วิรัช') ? 'Wirat' : 'Somsri';
             document.getElementById('active-chat-img').src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${img}`;
-            document.getElementById('chat-messages').innerHTML = `<div class="msg-them">สวัสดีครับ ยินดีที่ได้คุยกับคุณ <b>fat nornor</b> มีอะไรให้ช่วยไหมครับ?</div>`;
+            document.getElementById('chat-messages').innerHTML = `<div class="msg-them">สวัสดีครับ ยินดีที่ได้คุยกับคุณ <b>${currentUser}</b> มีอะไรให้ช่วยไหมครับ?</div>`;
         }
 
         function sendMessage() {
@@ -334,7 +344,6 @@
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // Simple Auto Reply
             setTimeout(() => {
                 chatBox.innerHTML += `<div class="msg-them">รับทราบครับ เดี๋ยวผมตรวจสอบให้สักครู่</div>`;
                 chatBox.scrollTop = chatBox.scrollHeight;
@@ -356,7 +365,6 @@
             }).then(res => {
                 if(res.isConfirmed) {
                     Swal.fire('สำเร็จ', 'ส่งข้อมูลเรียบร้อยแล้ว', 'success');
-                    // Add to chat automatically
                     startChat('นพ. วิรัช');
                     const chatBox = document.getElementById('chat-messages');
                     chatBox.innerHTML += `<div class="msg-me"><b>[CONCERN]</b><br>ยา: ${drug}<br>ประเภท: ${type}<br>ความเห็น: ${msg}</div>`;
@@ -364,7 +372,7 @@
             });
         }
 
-        // --- Original Logic ---
+        // --- History Logic ---
         function renderHistory() {
             document.getElementById('history-list').innerHTML = hData.map((h, index) => `
                 <div class="bg-white p-6 rounded-3xl flex justify-between items-center shadow-sm border border-slate-100">
@@ -391,9 +399,22 @@
             document.getElementById('history-modal').classList.add('active');
         }
 
+        // --- Auth Logic ---
         function logout() {
-            Swal.fire({ title: 'ออกจากระบบ?', text: 'คุณต้องการออกจากระบบ Medlink Pro ใช่หรือไม่?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ใช่, ออกจากระบบ', cancelButtonText: 'ยกเลิก' }).then(res => {
-                if(res.isConfirmed) { location.reload(); }
+            Swal.fire({ 
+                title: 'ออกจากระบบ?', 
+                text: 'คุณต้องการออกจากระบบ Medlink Pro ใช่หรือไม่?', 
+                icon: 'warning', 
+                showCancelButton: true, 
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'ใช่, ออกจากระบบ', 
+                cancelButtonText: 'ยกเลิก' 
+            }).then(res => {
+                if(res.isConfirmed) { 
+                    localStorage.clear(); // ล้างข้อมูลการ Login
+                    window.location.href = 'login.html'; // ส่งกลับหน้า Login
+                }
             });
         }
 
@@ -404,6 +425,7 @@
             Swal.fire('สำเร็จ', `พบข้อมูลยา ${code} ในฐานข้อมูลเภสัชกรรม`, 'success'); 
         }
 
+        // --- Camera Logic ---
         let isCamOpen = false;
         async function toggleCam() {
             const v = document.getElementById('v'), p = document.getElementById('p'), btn = document.getElementById('btn-cam');
@@ -421,7 +443,6 @@
             }
         }
 
-        // Listen for Enter key in chat
         document.addEventListener('keypress', function (e) {
             if (e.key === 'Enter' && !document.getElementById('page-chat').classList.contains('hidden')) {
                 sendMessage();
