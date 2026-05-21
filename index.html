@@ -29,6 +29,19 @@
         .user-placeholder { width: 70px; height: 70px; background: #f1f5f9; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; margin: 0 auto; color: #64748b; font-size: 2rem; border-radius: 4px; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
+    <script>
+        // ตรวจสอบการ Login
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+        
+        // ฟังก์ชันออกจากระบบ
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+    </script>
 </head>
 <body class="h-screen flex overflow-hidden">
 
@@ -41,7 +54,7 @@
             <button onclick="switchPage('chat')" id="nav-chat" class="p-5 text-blue-100 hover:bg-blue-900 transition-all" title="แชทระบบ">✉️</button>
             <button onclick="switchPage('history')" id="nav-history" class="p-5 text-blue-100 hover:bg-blue-900 transition-all" title="ประวัติ">📚</button>
         </div>
-        <button onclick="location.reload()" class="mt-auto p-5 text-red-200 hover:text-white border-t border-blue-800">🚪</button>
+        <button onclick="logout()" class="mt-auto p-5 text-red-200 hover:text-white border-t border-blue-800" title="ออกจากระบบ">🚪</button>
     </nav>
 
     <div class="flex-1 flex flex-col overflow-hidden relative">
