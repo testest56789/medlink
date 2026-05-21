@@ -11,8 +11,8 @@
         body { font-family: 'Sarabun', sans-serif; background-color: #f1f5f9; }
     </style>
     <script>
-        // ตรวจสอบการ Login ก่อนเข้าหน้าตั้งค่า (รักษาข้อมูลเดิม)
-        if (!localStorage.getItem('user')) {
+        // ตรวจสอบการ Login ก่อนเข้าหน้าตั้งค่า
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
             window.location.href = 'login.html';
         }
     </script>
